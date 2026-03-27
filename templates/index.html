@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SML Auto Tool - Pro Max</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Animated Gradient Background */
+        body {
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Enhanced Glassmorphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Smooth reveal animation for boxes */
+        .reveal {
+            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Button Glow & Bounce */
+        .btn-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-hover:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 20px -10px currentColor;
+        }
+        .btn-hover:active:not(:disabled) { transform: translateY(1px); }
+
+        /* Copy icon hover effect */
+        .copy-btn { transition: all 0.2s ease; }
+        .group:hover .copy-btn { color: #38bdf8; } /* Light blue on row hover */
+        .copy-btn:active { transform: scale(0.8); color: #4ade80; }
+
+        /* Fancy Loader */
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+<div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-800 border border-gray-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50 pointer-events-none">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-green-400 text-xl"></i> 
+    <span id="toastMsg" class="font-medium text-sm">Success!</span>
+</div>
+
+<div class="glass rounded-3xl p-8 w-full max-w-lg relative overflow-hidden">
+    <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+    <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style="animation-delay: 2s;"></div>
+
+    <div class="text-center mb-8 relative z-10">
+        <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-3 tracking-tight">🔥 SML Auto</h1>
+        <div class="inline-flex justify-center space-x-6 text-sm text-gray-300 font-mono bg-black/40 rounded-full px-5 py-2 border border-gray-700/50 shadow-inner">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-user-plus text-green-400"></i> <span id="statGen" class="font-bold">0</span></div>
+            <div class="text-gray-600">|</div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-up text-blue-400"></i> <span id="statSub" class="font-bold">0</span></div>
+        </div>
+    </div>
+
+    <div class="space-y-6 relative z-10">
+        <div>
+            <button id="btnGen" onclick="generateInfo()" class="btn-hover w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-blue-500 flex justify-center items-center">
+                <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 1. Generate Info & Email</span>
+            </button>
+            <div id="infoBox" class="hidden mt-4 space-y-3 bg-black/50 p-5 rounded-2xl text-sm font-mono border border-gray-700/50 shadow-lg reveal">
+                <div class="flex justify-between items-center group">
+                    <span class="text-gray-400">Name: <span id="txtFullName" class="text-gray-100 tracking-wide"></span></span>
+                    <i class="fa-regular fa-copy copy-btn cursor-pointer text-gray-500 text-lg" onclick="copyText('txtFullName', 'Name')"></i>
+                </div>
+                <div class="flex justify-between items-center group">
+                    <span class="text-gray-400">User: <span id="txtUser" class="text-gray-100 tracking-wide"></span></span>
+                    <i class="fa-regular fa-copy copy-btn cursor-pointer text-gray-500 text-lg" onclick="copyText('txtUser', 'Username')"></i>
+                </div>
+                <div class="flex justify-between items-center group">
+                    <span class="text-gray-400">Pass: <span id="txtPass" class="text-gray-100 tracking-wide"></span></span>
+                    <i class="fa-regular fa-copy copy-btn cursor-pointer text-gray-500 text-lg" onclick="copyText('txtPass', 'Password')"></i>
+                </div>
+                <div class="flex justify-between items-center group">
+                    <span class="text-gray-400">Mail: <span id="txtMail" class="text-gray-100 tracking-wide"></span></span>
+                    <i class="fa-regular fa-copy copy-btn cursor-pointer text-gray-500 text-lg" onclick="copyText('txtMail', 'Email')"></i>
+                </div>
+            </div>
+            <div id="errGen" class="text-red-400 text-xs mt-2 text-center hidden font-medium reveal"></div>
+        </div>
+
+        <div>
+            <button id="btnOtp" onclick="checkOtp()" class="btn-hover w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-indigo-500 flex justify-center items-center opacity-50 cursor-not-allowed" disabled>
+                <span><i class="fa-brands fa-instagram mr-2"></i> 2. Fetch IG OTP</span>
+            </button>
+            <div id="otpBox" class="hidden mt-4 flex justify-between items-center bg-black/50 p-5 rounded-2xl text-sm font-mono border border-green-900/50 shadow-lg group reveal">
+                <span class="text-gray-400">OTP: <span id="txtOtp" class="text-green-400 font-extrabold text-xl tracking-widest drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span></span>
+                <i class="fa-regular fa-copy copy-btn cursor-pointer text-gray-500 text-xl" onclick="copyText('txtOtp', 'OTP Code')"></i>
+            </div>
+            <div id="errOtp" class="text-red-400 text-xs mt-2 text-center hidden font-medium reveal"></div>
+        </div>
+
+        <div class="bg-black/20 p-4 rounded-2xl border border-gray-700/30">
+            <input type="text" id="secretKey" placeholder="🔑 Paste 2FA Secret Key here..." class="w-full bg-black/50 border border-gray-600 text-white text-sm rounded-xl px-4 py-3.5 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 mb-3 transition-all placeholder-gray-500">
+            <button id="btn2fa" onclick="generate2fa()" class="btn-hover w-full bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-purple-500 flex justify-center items-center opacity-50 cursor-not-allowed" disabled>
+                <span><i class="fa-solid fa-shield-halved mr-2"></i> 3. Generate 2FA</span>
+            </button>
+            <div id="twofaBox" class="hidden mt-4 flex justify-between items-center bg-black/50 p-5 rounded-2xl text-sm font-mono border border-purple-900/50 shadow-lg group reveal">
+                <span class="text-gray-400">2FA: <span id="txt2fa" class="text-fuchsia-400 font-extrabold text-xl tracking-widest drop-shadow-[0_0_8px_rgba(232,121,249,0.5)]"></span></span>
+                <i class="fa-regular fa-copy copy-btn cursor-pointer text-gray-500 text-xl" onclick="copyText('txt2fa', '2FA Code')"></i>
+            </div>
+            <div id="err2fa" class="text-red-400 text-xs mt-2 text-center hidden font-medium reveal"></div>
+        </div>
+
+        <div class="pt-2">
+            <button id="btnSubmit" onclick="submitAll()" class="btn-hover w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-extrabold py-4 px-4 rounded-xl shadow-emerald-500 text-lg flex justify-center items-center opacity-50 cursor-not-allowed" disabled>
+                <span><i class="fa-solid fa-cloud-arrow-up mr-2"></i> 4. Save to Server</span>
+            </button>
+            <div id="errSubmit" class="text-red-400 text-xs mt-2 text-center hidden font-medium reveal"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Fancy Toast Notification System ---
+    let toastTimeout;
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
+
+        toastMsg.innerText = message;
+        
+        if (type === 'success') {
+            toastIcon.className = 'fa-solid fa-circle-check text-green-400 text-xl';
+            toast.classList.replace('border-red-600', 'border-green-600') || toast.classList.add('border-green-600');
+        } else {
+            toastIcon.className = 'fa-solid fa-circle-exclamation text-red-400 text-xl';
+            toast.classList.replace('border-green-600', 'border-red-600') || toast.classList.add('border-red-600');
+        }
+
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 3000);
+    }
+
+    // --- Core UI Functions ---
+    function setLoading(btnId, htmlContent) {
+        const btn = document.getElementById(btnId);
+        btn.disabled = true;
+        btn.innerHTML = `<div class="loader"></div> <span>Processing...</span>`;
+    }
+
+    function resetLoading(btnId, originalHtml, enable = true) {
+        const btn = document.getElementById(btnId);
+        btn.innerHTML = originalHtml;
+        if (enable) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    function enableBtn(btnId) {
+        const btn = document.getElementById(btnId);
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function copyText(elementId, labelName) {
+        const text = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`Copied ${labelName} to clipboard!`);
+        });
+    }
+
+    function updateStats() {
+        fetch('/api/stats').then(res => res.json()).then(data => {
+            document.getElementById('statGen').innerText = data.generated;
+            document.getElementById('statSub').innerText = data.submitted;
+        });
+    }
+
+    async function apiCall(endpoint, payload = {}) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: Object.keys(payload).length ? JSON.stringify(payload) : null
+        });
+        return await response.json();
+    }
+
+    // --- Main Logic ---
+    async function generateInfo() {
+        document.getElementById('errGen').classList.add('hidden');
+        const origBtn = `<span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 1. Generate Info & Email</span>`;
+        setLoading('btnGen');
+        
+        const res = await apiCall('/api/generate_info');
+        resetLoading('btnGen', origBtn);
+
+        if (res.status === 'success') {
+            document.getElementById('txtFullName').innerText = res.full_name; // Full name added!
+            document.getElementById('txtUser').innerText = res.username;
+            document.getElementById('txtPass').innerText = res.password;
+            document.getElementById('txtMail').innerText = res.email;
+            
+            const infoBox = document.getElementById('infoBox');
+            infoBox.classList.remove('hidden');
+            // Re-trigger animation
+            infoBox.classList.remove('reveal');
+            void infoBox.offsetWidth; // trigger reflow
+            infoBox.classList.add('reveal');
+            
+            updateStats();
+            enableBtn('btnOtp');
+            showToast("Generated new user credentials!");
+        } else {
+            document.getElementById('errGen').innerText = res.message;
+            document.getElementById('errGen').classList.remove('hidden');
+        }
+    }
+
+    async function checkOtp() {
+        document.getElementById('errOtp').classList.add('hidden');
+        const origBtn = `<span><i class="fa-brands fa-instagram mr-2"></i> 2. Fetch IG OTP</span>`;
+        setLoading('btnOtp');
+        
+        const res = await apiCall('/api/check_otp');
+        resetLoading('btnOtp', origBtn);
+
+        if (res.status === 'success') {
+            document.getElementById('txtOtp').innerText = res.otp_code;
+            document.getElementById('otpBox').classList.remove('hidden');
+            enableBtn('btn2fa');
+            showToast("OTP Received!", 'success');
+            copyText('txtOtp', 'OTP Code'); // Auto-copy OTP for speed!
+        } else {
+            document.getElementById('errOtp').innerText = res.message;
+            document.getElementById('errOtp').classList.remove('hidden');
+        }
+    }
+
+    async function generate2fa() {
+        const secret = document.getElementById('secretKey').value;
+        if(!secret) {
+            showToast("Please paste the secret key first!", 'error');
+            document.getElementById('secretKey').focus();
+            return;
+        }
+
+        document.getElementById('err2fa').classList.add('hidden');
+        const origBtn = `<span><i class="fa-solid fa-shield-halved mr-2"></i> 3. Generate 2FA</span>`;
+        setLoading('btn2fa');
+        
+        const res = await apiCall('/api/generate_2fa', { secret_key: secret });
+        resetLoading('btn2fa', origBtn);
+
+        if (res.status === 'success') {
+            document.getElementById('txt2fa').innerText = res.twofa_code;
+            document.getElementById('twofaBox').classList.remove('hidden');
+            enableBtn('btnSubmit');
+            showToast("2FA Generated successfully!");
+        } else {
+            document.getElementById('err2fa').innerText = res.message;
+            document.getElementById('err2fa').classList.remove('hidden');
+        }
+    }
+
+    async function submitAll() {
+        document.getElementById('errSubmit').classList.add('hidden');
+        const origBtn = `<span><i class="fa-solid fa-cloud-arrow-up mr-2"></i> 4. Save to Server</span>`;
+        setLoading('btnSubmit');
+        
+        const res = await apiCall('/api/submit_all');
+        resetLoading('btnSubmit', origBtn);
+
+        if (res.status === 'success') {
+            updateStats();
+            showToast("✅ Data saved to Server!", 'success');
+            
+            // Reset UI for the next run after a short delay
+            setTimeout(() => {
+                document.getElementById('infoBox').classList.add('hidden');
+                document.getElementById('otpBox').classList.add('hidden');
+                document.getElementById('twofaBox').classList.add('hidden');
+                document.getElementById('secretKey').value = '';
+                
+                ['btnOtp', 'btn2fa', 'btnSubmit'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            }, 2500);
+        } else {
+            document.getElementById('errSubmit').innerText = res.message;
+            document.getElementById('errSubmit').classList.remove('hidden');
+            showToast("Failed to save data!", 'error');
+        }
+    }
+
+    updateStats();
+</script>
+</body>
+</html>
